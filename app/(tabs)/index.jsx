@@ -402,7 +402,7 @@ const handleNotificationDecline = () => {
                 <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", marginVertical: 8, }} >
                   <Text style={{ fontSize: 16, color: "#666" }}>Address</Text>
                   <Text style={{ fontSize: 16, textAlign: "right", flex: 1, marginLeft: 20, }} >
-                    {currentBooking.address}
+                    {currentBooking?.address?.street}, {currentBooking?.address?.city}
                   </Text>
                 </View>
               </>

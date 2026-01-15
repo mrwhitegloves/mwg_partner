@@ -22,9 +22,7 @@
       "config": {
         "googleMapsApiKey": "process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY"
       },
-      "runtimeVersion": {
-        "policy": "appVersion"
-      },
+      "runtimeVersion": "1.0.0",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to processing the bookings.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to processing the bookings.",
@@ -65,9 +63,7 @@
       "package": "com.vivekpradhan.partner",
       "googleServicesFile": "./google-services.json",
       "versionCode": 2,
-      "runtimeVersion": {
-        "policy": "nativeVersion"
-      }
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "output": "static",
@@ -100,7 +96,6 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "minSdkVersion": 24,
-            "googleServicesFile": "./google-services.json",
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResources": true
           },

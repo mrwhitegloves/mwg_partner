@@ -25,7 +25,9 @@ const connect = async () => {
     return null;
   }
 
-  socket = io(process.env.EXPO_PUBLIC_SOCKET_URL, {
+  // Use local variable to prevent null reference in callbacks
+  // Also connect to the /partner namespace
+  const newSocket = io(process.env.EXPO_PUBLIC_SOCKET_URL + '/partner', {
     auth: { access_token: token },
     transports: ['websocket'],
     reconnection: true,
@@ -34,27 +36,30 @@ const connect = async () => {
     timeout: 20000,
   });
 
-  socket.on('connect', () => {
+  socket = newSocket;
+
+  newSocket.on('connect', () => {
+    console.log('Socket Connected to /partner namespace');
     // GO ONLINE
     if(partner?.isAvailable === true){
-      socket.emit('goOnline')
+      newSocket.emit('goOnline')
     }
   });
 
-  socket.on('connect_error', (err) => {
+  newSocket.on('connect_error', (err) => {
     console.log('Socket error:', err.message);
   });
 
-  socket.on('disconnect', () => {
+  newSocket.on('disconnect', () => {
     console.log('Socket disconnected');
   });
 
   // Optional: Listen for new bookings (debug)
-  socket.on('newBooking', (data) => {
+  newSocket.on('newBooking', (data) => {
     console.log('New Booking Received:', data);
   });
 
-  return socket;
+  return newSocket;
 };
 
 export const initializeSocket = async () => {

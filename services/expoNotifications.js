@@ -43,10 +43,11 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('new-bookings-v3', {
+    // Changing ID to 'v4' to force update the sound setting on existing devices
+    await Notifications.setNotificationChannelAsync('new-bookings-v4', {
       name: 'New Bookings',
       importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
+      sound: 'booking.wav', // Now pointing to the custom file in res/raw/
       lightColor: '#d92828ff',
     });
   }
