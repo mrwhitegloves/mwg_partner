@@ -1,8 +1,13 @@
-package com.mrwhitegloves.partner
+package com.whiteglovesapp.partner
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import android.widget.Toast
+import android.view.WindowManager
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -21,6 +26,31 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
+
+    // WAKE SCREEN & SHOW OVER LOCK SCREEN (UBER-STYLE)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+    }
+    window.addFlags(
+        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+    )
+
+    // REQUEST DISPLAY OVER OTHER APPS (POPUP) PERMISSION
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (!Settings.canDrawOverlays(this)) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            // 101 is just a request code
+            startActivityForResult(intent, 101)
+            Toast.makeText(this, "Enable 'Display over other apps' for Booking Alerts", Toast.LENGTH_LONG).show()
+        }
+    }
   }
 
   /**

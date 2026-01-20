@@ -14,6 +14,10 @@ import SplashScreen from './(onboarding)/splash';
 import { getSocket, initializeSocket } from '@/services/socket';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
+import NotificationProvider from '../services/NotificationProvider';
+import { createNotificationChannel } from '../services/notifeeService';
+
+import IncomingBookingModal from '@/components/IncomingBookingModal';
 
 // ────── ROOT LAYOUT ──────
 export default function RootLayout() {
@@ -22,6 +26,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     (async () => {
+      // 0. Ensure Notification Channel (High Priority) Exists
+      await createNotificationChannel();
+
       // 1. Initialize socket
       socketRef.current = await initializeSocket();
     })();
@@ -51,23 +58,6 @@ export default function RootLayout() {
   //   return () => unsubscribe();
   // }, []);
 
-  // Socket fallback (in case FCM fails)
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
-
-    const handler = async (data) => {
-      // await playRingtone();
-      console.log("data:-notifee ", data)
-      // await showBookingNotification(data);
-    // console.log(`New Booking! ₹${data.total} at ${data.scheduledTime}`)
-    // alert(`New Booking! ₹${data.total} at ${data.scheduledTime}`);
-    };
-
-    socket.on('newBooking', handler);
-    return () => socket.off('newBooking', handler);
-  }, []);
-
   // ────── RECONNECT SOCKET ──────
   useEffect(() => {
   // Initial connection
@@ -89,16 +79,19 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={<SplashScreen />} persistor={persistor}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            <Stack.Screen name="bookingDetails" options={{ headerShown: false }} />
-          </Stack>
-          <StatusBar style="dark" />
-          <Toast />
-        </ThemeProvider>
+        <NotificationProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              <Stack.Screen name="bookingDetails" options={{ headerShown: false }} />
+            </Stack>
+            <StatusBar style="dark" />
+            <IncomingBookingModal />
+            <Toast />
+          </ThemeProvider>
+        </NotificationProvider>
       </PersistGate>
     </Provider>
   );

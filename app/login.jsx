@@ -63,7 +63,8 @@ export default function LoginScreen() {
         text2: 'Login successful',
       });
 
-      router.replace('/(tabs)/');
+      // Redirect to Permissions Check instead of direct Tabs
+      router.replace('/(onboarding)/permissions');
     } catch (err) {
       Toast.show({
         type: 'error',
