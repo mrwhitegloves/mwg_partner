@@ -15,6 +15,9 @@ import { getSocket, initializeSocket } from '@/services/socket';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import NotificationProvider from '../services/NotificationProvider';
+import { createNotificationChannel } from '../services/notifeeService';
+
+import IncomingBookingModal from '@/components/IncomingBookingModal';
 
 // ────── ROOT LAYOUT ──────
 export default function RootLayout() {
@@ -23,6 +26,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     (async () => {
+      // 0. Ensure Notification Channel (High Priority) Exists
+      await createNotificationChannel();
+
       // 1. Initialize socket
       socketRef.current = await initializeSocket();
     })();
@@ -82,6 +88,7 @@ export default function RootLayout() {
               <Stack.Screen name="bookingDetails" options={{ headerShown: false }} />
             </Stack>
             <StatusBar style="dark" />
+            <IncomingBookingModal />
             <Toast />
           </ThemeProvider>
         </NotificationProvider>

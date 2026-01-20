@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
+import messaging from '@react-native-firebase/messaging';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -17,9 +18,10 @@ export async function registerForPushNotificationsAsync() {
   await new Promise(resolve => setTimeout(resolve, 500));
   let token;
 
+  // Allow simulator to continue for logic flow, even if push token is invalid
   if (!Device.isDevice) {
-    console.log('Push notifications only work on physical devices');
-    return;
+    console.log('Push notifications usually only work on physical devices');
+    // return; // COMMENTED OUT for simulator testing logic flow
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -43,16 +45,23 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (Platform.OS === 'android') {
-    // Changing ID to 'v4' to force update the sound setting on existing devices
-    await Notifications.setNotificationChannelAsync('new-bookings-v4', {
+    // Bumped to v7 for MAX importance (Unified Channel ID)
+    await Notifications.setNotificationChannelAsync('new-bookings-v7', {
       name: 'New Bookings',
-      importance: Notifications.AndroidImportance.HIGH,
-      sound: 'booking.wav', // Now pointing to the custom file in res/raw/
+      importance: Notifications.AndroidImportance.MAX, // MAX for Heads-up
+      sound: 'booking.wav', 
       lightColor: '#d92828ff',
+      vibrationPattern: [0, 250, 250, 250],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true, // Requires special permission, but good to try requesting
     });
   }
 
-  const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+  const projectId = 
+    Constants?.expoConfig?.extra?.eas?.projectId ?? 
+    Constants?.easConfig?.projectId ?? 
+    "6f713608-a0d4-4cf6-980f-84314b9ca227"; // Hardcoded fallback
+
   if (!projectId) {
     console.error('EAS Project ID not found!');
     Toast.show({
@@ -71,6 +80,13 @@ export async function registerForPushNotificationsAsync() {
     token = pushToken.data;
     console.log('Expo Push Token Registered:', token);
 
+    try {
+      const fcmToken = await messaging().getToken();
+      console.log('FCM Token:', fcmToken);
+    } catch (e) {
+      console.log('FCM Token Error:', e);
+    }
+
     // SUCCESS TOAST (only once per install)
     Toast.show({
       type: 'success',
@@ -82,12 +98,9 @@ export async function registerForPushNotificationsAsync() {
 
     return token;
   } catch (error) {
-    console.error('Failed to get push token:', error);
-    Toast.show({
-      type: 'error',
-      text1: 'Notification Setup Failed',
-      text2: 'Restart app and try again',
-    });
+    // SILENT FAILURE FOR EMULATOR/TESTING
+    console.log('Push token registration failed (expected on emulator):', error.message);
+    // Suppress red screen and toast to allow functionality testing via Socket
     return null;
   }
 }

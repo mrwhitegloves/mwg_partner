@@ -25,9 +25,13 @@ const connect = async () => {
     return null;
   }
 
+  if (socket?.connected) {
+      socket.disconnect();
+  }
+
   // Use local variable to prevent null reference in callbacks
   // Also connect to the /partner namespace
-  const newSocket = io(process.env.EXPO_PUBLIC_SOCKET_URL + '/partner', {
+  const newSocket = io(SOCKET_URL + '/partner', {
     auth: { access_token: token },
     transports: ['websocket'],
     reconnection: true,
@@ -40,6 +44,9 @@ const connect = async () => {
 
   newSocket.on('connect', () => {
     console.log('Socket Connected to /partner namespace');
+    const Toast = require("react-native-toast-message").default;
+    Toast.show({ type: 'success', text1: 'Online', text2: 'Connected to server' });
+
     // GO ONLINE
     if(partner?.isAvailable === true){
       newSocket.emit('goOnline')
@@ -48,6 +55,8 @@ const connect = async () => {
 
   newSocket.on('connect_error', (err) => {
     console.log('Socket error:', err.message);
+    const Toast = require("react-native-toast-message").default;
+    Toast.show({ type: 'error', text1: 'Connection Error', text2: err.message });
   });
 
   newSocket.on('disconnect', () => {

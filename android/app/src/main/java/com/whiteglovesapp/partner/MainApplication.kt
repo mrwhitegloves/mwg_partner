@@ -1,4 +1,4 @@
-package com.mrwhitegloves.partner
+package com.whiteglovesapp.partner
 
 import android.app.Application
 import android.content.res.Configuration

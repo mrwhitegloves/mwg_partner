@@ -18,6 +18,10 @@ allprojects {
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
+    maven {
+      // Added manually to fix Notifee dependency resolution
+      url "$rootDir/../node_modules/@notifee/react-native/android/libs"
+    }
   }
 }
 

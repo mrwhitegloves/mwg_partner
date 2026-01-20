@@ -9,17 +9,14 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Modal,
   RefreshControl,
   ScrollView,
   StatusBar,
   Switch,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPartnerMe } from "../../store/slices/authSlice";
 import { toggleOnlineStatus } from "../../store/slices/onlineStatusSlice";
@@ -29,16 +26,11 @@ export default function HomeScreen() {
   const router = useRouter();
   const { partner, loading } = useSelector((state) => state.auth);
   const onlineStatus = useSelector((state) => state.onlineStatus);
-  const { booking, showModal } = useSelector((state) => state.incomingBooking);
-  const audioSource = require("../../assets/sounds/booking.wav");
-  const player = useAudioPlayer(audioSource);
 
   // Removed local duplicate state (modalVisible, currentBooking)
   const [todayBookings, setTodayBookings] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState(true);
-
-  console.log("notification test in home: ", booking)
 
   // Fetch Today's Bookings
   const fetchTodayBookings = async () => {
@@ -73,39 +65,6 @@ export default function HomeScreen() {
     if (partner) {
       dispatch(toggleOnlineStatus(partner.isAvailable)); // true → false, false → true
     }
-  };
-
-  // Notification Accept Handler (Uses Redux State)
-  const handleNotificationAccept = async () => {
-    if (!booking?.bookingId) return;
-
-    try {
-      player.pause(); // Ringtone on accept
-      await api.put(`/bookings/${booking.bookingId}/confirm`, {
-        partnerLiveLocation: { latitude: 0, longitude: 0 },
-      });
-
-      const socket = getSocket();
-      socket?.emit("acceptBooking", { bookingId: booking.bookingId });
-
-      Toast.show({ type: "success", text1: "Booking Accepted!" });
-      dispatch(clearIncomingBooking());
-      fetchTodayBookings();
-    } catch (err) {
-      const msg = err.response?.data?.message || "Booking already taken";
-      Toast.show({ type: "error", text1: msg });
-      dispatch(clearIncomingBooking());
-    } finally {
-      player.pause();
-    }
-  };
-
-  const handleNotificationDecline = () => {
-    const socket = getSocket();
-    socket?.emit("declineBooking", { bookingId: booking?.bookingId });
-    player.pause();
-    dispatch(clearIncomingBooking());
-    Toast.show({ type: "info", text1: "Booking Declined" });
   };
 
   const isOnline = partner?.isAvailable;
@@ -264,72 +223,6 @@ export default function HomeScreen() {
         )}
         <View style={{ height: 80 }} />
       </ScrollView>
-
-      {/* SINGLE UNIFIED INCOMING BOOKING MODAL (Controlled by Redux) */}
-      <Modal visible={showModal} transparent animationType="slide" onRequestClose={handleNotificationDecline}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" }}>
-          <View style={{ backgroundColor: "#fff", borderRadius: 24, padding: 32, width: "90%", alignItems: "center" }}>
-            <Ionicons name="car-sport" size={70} color="#4A90E2" />
-            <Text style={{ fontSize: 28, fontWeight: "bold", marginVertical: 20 }}>
-              New Booking Alert!
-            </Text>
-
-            {booking && (
-              <>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", marginVertical: 8 }}>
-                  <Text style={{ fontSize: 16, color: "#666" }}>Service</Text>
-                  <Text style={{ fontSize: 18, fontWeight: "600" }}>
-                    {booking.service}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", marginVertical: 8 }}>
-                  <Text style={{ fontSize: 16, color: "#666" }}>Amount</Text>
-                  <Text style={{ fontSize: 28, fontWeight: "bold", color: "#2ECC71" }}>
-                     {/* Safe fallback for total/amount */}
-                     ₹{booking.total || booking.amount}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", marginVertical: 8 }}>
-                  <Text style={{ fontSize: 16, color: "#666" }}>Time</Text>
-                  <Text style={{ fontSize: 16, textAlign: "right", flex: 1, marginLeft: 20 }}>
-                    {booking.scheduledTime}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", marginVertical: 8 }}>
-                  <Text style={{ fontSize: 16, color: "#666" }}>Date</Text>
-                  <Text style={{ fontSize: 16, textAlign: "right", flex: 1, marginLeft: 20 }}>
-                    {booking.scheduledDate ? new Date(booking.scheduledDate).toLocaleDateString('en-GB') : "Today"}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%", marginVertical: 8 }}>
-                  <Text style={{ fontSize: 16, color: "#666" }}>Address</Text>
-                  <Text style={{ fontSize: 16, textAlign: "right", flex: 1, marginLeft: 20 }}>
-                    {/* Safe address handling */}
-                    {typeof booking.address === 'object' 
-                      ? `${booking.address.street}, ${booking.address.city}` 
-                      : booking.address || "N/A"}
-                  </Text>
-                </View>
-              </>
-            )}
-
-            <View style={{ flexDirection: "row", gap: 16, marginTop: 32, width: "100%" }}>
-              <TouchableOpacity
-                style={{ flex: 1, backgroundColor: "#E74C3C", padding: 16, borderRadius: 12, alignItems: "center" }}
-                onPress={handleNotificationDecline}
-              >
-                <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>Decline</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{ flex: 1, backgroundColor: "#2ECC71", padding: 16, borderRadius: 12, alignItems: "center" }}
-                onPress={handleNotificationAccept}
-              >
-                <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>Accept</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

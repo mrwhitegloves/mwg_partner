@@ -2,16 +2,15 @@
 import api from '@/services/api';
 import { registerForPushNotificationsAsync } from '@/services/expoNotifications';
 import { playRingtone } from './sound';
-import { getSocket } from '@/services/socket';
+import { displayIncomingCallNotification } from './notifeeService';
+import { initializeSocket } from '@/services/socket';
 import { setIncomingBooking } from '@/store/slices/bookingSlice';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Platform } from 'react-native';
-
-const useLastNotificationResponse = Platform.OS === 'web'
-  ? () => null
-  : Notifications.useLastNotificationResponse;
+import notifee, { EventType, TriggerType, AndroidImportance, AndroidCategory } from '@notifee/react-native';
+import messaging from '@react-native-firebase/messaging';
 
 export default function NotificationProvider({ children }) {
   const dispatch = useDispatch();
@@ -20,18 +19,42 @@ export default function NotificationProvider({ children }) {
 
   // 0. SOCKET LISTENER (Real-time Fallback)
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
+    let socketCleanup = null;
 
-    const handler = async (data) => {
-      console.log('SOCKET: New Booking Received', data);
-      await playRingtone();
-      dispatch(setIncomingBooking(data));
+    const setupSocketListener = async () => {
+      const socket = await initializeSocket();
+      if (!socket) return;
+
+      const handler = async (data) => {
+        console.log('SOCKET: New Booking Received', data);
+        
+        const Toast = require("react-native-toast-message").default;
+        Toast.show({ type: 'info', text1: 'New Booking Received', text2: `ID: ${data.bookingId}` });
+        
+        // Trigger Full Screen Notification (Notifee) even in foreground
+        await displayIncomingCallNotification(data);
+
+        try {
+          await playRingtone();
+        } catch (e) {
+          console.log("Ringtone error", e);
+        }
+        dispatch(setIncomingBooking(data));
+      };
+
+      socket.on('newBooking', handler);
+
+      socketCleanup = () => {
+        socket.off('newBooking', handler);
+      };
     };
 
-    socket.on('newBooking', handler);
-    return () => socket.off('newBooking', handler);
-  }, [dispatch]);
+    setupSocketListener();
+
+    return () => {
+      if (socketCleanup) socketCleanup();
+    };
+  }, [dispatch, partner?._id]);
 
   // 1. Register push token + Foreground listener
   useEffect(() => {
@@ -51,9 +74,7 @@ export default function NotificationProvider({ children }) {
 
       // FOREGROUND: Only one listener
       notificationListener.current = Notifications.addNotificationReceivedListener(async (notification) => {
-        console.log("notification test 1: ",notification)
         const data = notification.request.content.data;
-        console.log("notification test 2: ",data)
         if (data?.type === 'new_booking') {
           await playRingtone();
           dispatch(setIncomingBooking(data));
@@ -69,21 +90,48 @@ export default function NotificationProvider({ children }) {
     };
   }, [partner?._id, dispatch]);
 
-  // 2. BACKGROUND + KILLED → TAP (NEW EXPO WAY — PERFECT)
-  const lastNotificationResponse = useLastNotificationResponse();
-
+  // 2. CHECK IF APP WAS OPENED BY NOTIFEE (Initial Notification / Full Screen Launch)
   useEffect(() => {
-    if (
-      lastNotificationResponse &&
-      lastNotificationResponse.notification.request.content.data?.type === 'new_booking' &&
-      lastNotificationResponse.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
-    ) {
-      console.log("notification test 3: ",lastNotificationResponse)
-      const data = lastNotificationResponse.notification.request.content.data;
-      console.log("notification test 4: ",data)
-      dispatch(setIncomingBooking(data));
+    async function checkInitialNotification() {
+      try {
+        const initialNotification = await notifee.getInitialNotification();
+        if (initialNotification) {
+          console.log('App opened via Notifee Initial Notification', initialNotification);
+          const { notification } = initialNotification;
+          if (notification.data?.type === 'new_booking') {
+              let bookingData = notification.data.payload;
+              if (typeof bookingData === 'string') {
+                try { bookingData = JSON.parse(bookingData); } 
+                catch (e) { bookingData = notification.data; }
+              } else if (!bookingData) { bookingData = notification.data; }
+              
+              dispatch(setIncomingBooking(bookingData));
+              await playRingtone(); 
+          }
+        }
+      } catch (e) {
+        console.error("Error checking initial notification:", e);
+      }
     }
-  }, [lastNotificationResponse]);
+    checkInitialNotification();
+  }, [dispatch]);
+
+  // 3. LISTEN FOR NOTIFEE FOREGROUND EVENTS (User Taps)
+  useEffect(() => {
+    return notifee.onForegroundEvent(({ type, detail }) => {
+      switch (type) {
+        case EventType.PRESS:
+          if (detail.notification?.data?.type === 'new_booking') {
+             let bookingData = detail.notification.data.payload;
+              if (typeof bookingData === 'string') {
+                 try { bookingData = JSON.parse(bookingData); } catch (e) {}
+              }
+             dispatch(setIncomingBooking(bookingData || detail.notification.data));
+          }
+          break;
+      }
+    });
+  }, [dispatch]);
 
   return <>{children}</>;
 }

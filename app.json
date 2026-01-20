@@ -8,6 +8,11 @@
     "scheme": "partner",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "6f713608-a0d4-4cf6-980f-84314b9ca227"
+      }
+    },
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
@@ -57,10 +62,12 @@
         "VIBRATE",
         "POST_NOTIFICATIONS",
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.USE_FULL_SCREEN_INTENT",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "jsEngine": "hermes",
-      "package": "com.vivekpradhan.partner",
+      "package": "com.whiteglovesapp.partner",
       "googleServicesFile": "./google-services.json",
       "versionCode": 2,
       "runtimeVersion": "1.0.0"
