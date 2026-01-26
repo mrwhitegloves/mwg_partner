@@ -1,15 +1,37 @@
 // app/providers/NotificationProvider.jsx
 import api from '@/services/api';
 import { registerForPushNotificationsAsync } from '@/services/expoNotifications';
+import { playRingtone } from './sound';
+import { getSocket } from '@/services/socket';
 import { setIncomingBooking } from '@/store/slices/bookingSlice';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Platform } from 'react-native';
+
+const useLastNotificationResponse = Platform.OS === 'web'
+  ? () => null
+  : Notifications.useLastNotificationResponse;
 
 export default function NotificationProvider({ children }) {
   const dispatch = useDispatch();
   const { partner } = useSelector((state) => state.auth);
   const notificationListener = useRef(null);
+
+  // 0. SOCKET LISTENER (Real-time Fallback)
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handler = async (data) => {
+      console.log('SOCKET: New Booking Received', data);
+      await playRingtone();
+      dispatch(setIncomingBooking(data));
+    };
+
+    socket.on('newBooking', handler);
+    return () => socket.off('newBooking', handler);
+  }, [dispatch]);
 
   // 1. Register push token + Foreground listener
   useEffect(() => {
@@ -28,11 +50,12 @@ export default function NotificationProvider({ children }) {
       }
 
       // FOREGROUND: Only one listener
-      notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+      notificationListener.current = Notifications.addNotificationReceivedListener(async (notification) => {
         console.log("notification test 1: ",notification)
         const data = notification.request.content.data;
         console.log("notification test 2: ",data)
         if (data?.type === 'new_booking') {
+          await playRingtone();
           dispatch(setIncomingBooking(data));
         }
       });
@@ -47,7 +70,7 @@ export default function NotificationProvider({ children }) {
   }, [partner?._id, dispatch]);
 
   // 2. BACKGROUND + KILLED → TAP (NEW EXPO WAY — PERFECT)
-  const lastNotificationResponse = Notifications.useLastNotificationResponse();
+  const lastNotificationResponse = useLastNotificationResponse();
 
   useEffect(() => {
     if (
