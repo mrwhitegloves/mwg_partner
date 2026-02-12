@@ -88,15 +88,18 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.mrwhitegloves.partner'
+    namespace 'com.whiteglovesapp.partner'
     defaultConfig {
-        applicationId 'com.mrwhitegloves.partner'
+        applicationId 'com.whiteglovesapp.partner'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.0"
+        versionCode 5
+        versionName "1.0.1"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
+        manifestPlaceholders = [EXPO_PUBLIC_GOOGLE_PLACES_API_KEY: System.getenv("EXPO_PUBLIC_GOOGLE_PLACES_API_KEY")]
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
     }
     signingConfigs {
         debug {

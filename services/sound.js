@@ -1,12 +1,12 @@
-import { Audio } from 'expo-audio';
+import { Audio } from "expo-audio";
 
 let ringtoneSound = null;
 
 export async function playRingtone() {
   if (ringtoneSound) return;
   const { sound } = await Audio.Sound.createAsync(
-    require('../assets/sounds/booking.wav'),
-    { isLooping: true }
+    require("../assets/sounds/booking.wav"),
+    { isLooping: true },
   );
   ringtoneSound = sound;
   await sound.playAsync();

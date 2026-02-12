@@ -31,6 +31,7 @@ export default function BookingDetailsScreen() {
   const router = useRouter();
 
   const [booking, setBooking] = useState(null);
+  const [adminBookingVehicle, setAdminBookingVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [partnerLocation, setPartnerLocation] = useState(null);
   const [staticMapUrl, setStaticMapUrl] = useState(null);
@@ -62,6 +63,23 @@ export default function BookingDetailsScreen() {
       setLoading(false);
     }
   };
+  console.log("booking details: ", booking)
+
+  useEffect(() => {
+    const fetchVehicle = async () => {
+    try {
+      const res = await api.get(`/partners/vehicle/${booking.vehicle}`);
+      console.log("vehicle res: ",res)
+      setAdminBookingVehicle(res.data.vehicle);
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Failed to load booking vehicle' });
+    }
+  };
+
+  if(booking?.source === "admin" && booking?.vehicle){
+    fetchVehicle();
+  }
+  }, [booking?.vehicle]);
 
   const requestLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -110,9 +128,19 @@ export default function BookingDetailsScreen() {
   };
 
   const markArrived = async () => {
-    await api.post(`/partners/booking/${id}/mark-arrived`);
-    updateBookingStatus(id, "arrived");
-    fetchBooking();
+    console.log("vivek 1")
+    if(booking?.source === "admin"){
+      console.log("vivek 2")
+      await api.post(`/partners/booking/${id}/admin-service-start`);
+      updateBookingStatus(id, "in-progress");
+      fetchBooking();
+    }
+    else {
+      console.log("vivek 3")
+      await api.post(`/partners/booking/${id}/mark-arrived`);
+      updateBookingStatus(id, "arrived");
+      fetchBooking();
+    }
   };
 
   const verifyOtp = async () => {
@@ -431,7 +459,7 @@ const closeQr = () => {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 4 }}>Company Name</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', lineHeight: 22 }}>
-                {booking.vehicleDetails?.make || 'N/A'}
+                {booking?.source === "admin" ? adminBookingVehicle?.make || 'N/A' : booking.vehicleDetails?.make || 'N/A'}
               </Text>
             </View>
           </View>
@@ -445,7 +473,7 @@ const closeQr = () => {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 4 }}>Model</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', lineHeight: 22 }}>
-                {booking.vehicleDetails?.model || 'N/A'}
+                {booking?.source === "admin" ? adminBookingVehicle?.model || 'N/A' : booking.vehicleDetails?.model || 'N/A'}
               </Text>
             </View>
           </View>
@@ -459,7 +487,7 @@ const closeQr = () => {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 4 }}>Segment</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', lineHeight: 22 }}>
-                {booking.vehicleDetails?.type || 'N/A'}
+                {booking?.source === "admin" ? adminBookingVehicle?.type || 'N/A' : booking.vehicleDetails?.type || 'N/A'}
               </Text>
             </View>
           </View>
@@ -473,7 +501,7 @@ const closeQr = () => {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 4 }}>RC Number</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', lineHeight: 22 }}>
-                {booking.vehicleDetails?.rc_number || 'N/A'}
+                {booking?.source === "admin" ? adminBookingVehicle?.rc_number || 'N/A' : booking.vehicleDetails?.rc_number || 'N/A'}
               </Text>
             </View>
           </View>
@@ -487,7 +515,7 @@ const closeQr = () => {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 4 }}>Vehicle Color</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#111827', lineHeight: 22 }}>
-                {booking.vehicleDetails?.color || 'N/A'}
+                {booking?.source === "admin" ? adminBookingVehicle?.color || 'N/A' : booking.vehicleDetails?.color || 'N/A'}
               </Text>
             </View>
           </View>
@@ -524,7 +552,7 @@ const closeQr = () => {
           </TouchableOpacity>
         )}
 
-        {status === 'arrived' && (
+        {status === 'arrived' && booking?.source !== "admin" && (
           <View style={{ backgroundColor: '#fff', margin: 16, padding: 20, borderRadius: 12 }}>
             <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 16 }}>Enter Customer OTP</Text>
             <TextInput
@@ -543,7 +571,7 @@ const closeQr = () => {
           </View>
         )}
 
-        {(status === 'in-progress' || status === 'completed') && (
+        {booking?.source !== "admin" && (status === 'in-progress' || status === 'completed') && (
           <View style={{ backgroundColor: '#FFFFFF', marginHorizontal: 16, marginBottom: 8, padding: 16, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }}>
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#000', marginBottom: 16 }}>Reached OTP</Text>
           

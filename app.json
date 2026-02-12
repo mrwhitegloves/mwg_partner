@@ -2,42 +2,38 @@
   "expo": {
     "name": "MWG Partner",
     "slug": "partner",
-    "version": "1.0.0",
+    "version": "1.0.1",
+    "runtimeVersion": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "partner",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/6f713608-a0d4-4cf6-980f-84314b9ca227"
+      "url": "https://u.expo.dev/c45e4938-e08b-49aa-8d2c-bcd075a18f30",
+      "requestHeaders": {
+        "expo-channel-name": "preview"
+      }
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.vivekpradhan.partner",
+      "bundleIdentifier": "com.whiteglovesapp.partner",
       "config": {
-        "googleMapsApiKey": "process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY"
-      },
-      "runtimeVersion": {
-        "policy": "appVersion"
+        "googleMapsApiKey": "${EXPO_PUBLIC_GOOGLE_PLACES_API_KEY}"
       },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to processing the bookings.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to processing the bookings.",
-        "UIBackgroundModes": [
-          "remote-notification",
-          "audio"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
       "config": {
         "googleMaps": {
-          "apiKey": "process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY"
+          "apiKey": "${EXPO_PUBLIC_GOOGLE_PLACES_API_KEY}"
         }
       },
       "adaptiveIcon": {
@@ -48,26 +44,20 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "useNextNotificationsApi": true,
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION",
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE",
-        "POST_NOTIFICATIONS",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.USE_FULL_SCREEN_INTENT",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "jsEngine": "hermes",
-      "package": "com.vivekpradhan.partner",
+      "package": "com.whiteglovesapp.partner",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 2,
-      "runtimeVersion": {
-        "policy": "nativeVersion"
-      }
+      "versionCode": 5
     },
     "web": {
       "output": "static",
@@ -90,7 +80,7 @@
       [
         "expo-location",
         {
-          "isAndroidBackgroundLocationEnabled": "Allow Mr White Gloves to access your location to find nearby services."
+          "isAndroidBackgroundLocationEnabled": false
         }
       ],
       [
@@ -100,9 +90,9 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "minSdkVersion": 24,
-            "googleServicesFile": "./google-services.json",
             "enableProguardInReleaseBuilds": true,
-            "enableShrinkResources": true
+            "enableShrinkResources": true,
+            "enableMinifyInReleaseBuilds": true
           },
           "ios": {
             "deploymentTarget": "15.1"
@@ -115,9 +105,7 @@
           "icon": "./assets/images/notification.png",
           "color": "#ff5075",
           "defaultChannel": "default",
-          "sounds": [
-            "./assets/sounds/booking.wav"
-          ],
+          "sounds": ["./assets/sounds/booking.wav"],
           "enableBackgroundRemoteNotifications": false
         }
       ],
@@ -125,13 +113,13 @@
         "expo-maps",
         {
           "requestLocationPermission": true,
-          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+          "locationPermission": "Allow MWG Partner to use your location"
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow $(PRODUCT_NAME) to play sound for new bookings."
+          "microphonePermission": "Allow MWG Partner to play sound for new bookings."
         }
       ],
       "expo-web-browser"
@@ -143,9 +131,10 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "6f713608-a0d4-4cf6-980f-84314b9ca227"
-      }
+        "projectId": "c45e4938-e08b-49aa-8d2c-bcd075a18f30"
+      },
+      "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY": "${EXPO_PUBLIC_GOOGLE_PLACES_API_KEY}"
     },
-    "owner": "vivek211"
+    "owner": "whiteglovesapp"
   }
 }

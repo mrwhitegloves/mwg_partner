@@ -22,7 +22,7 @@ const getToken = async () => {
 };
 
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_BASE_URL || 'https://mwg-backend.onrender.com/api' || 'http://192.168.29.36:5000/api',
+  baseURL: process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.mrwhitegloves.com/api' || 'http://192.168.29.36:5000/api',
   timeout: 10000,
 });
 

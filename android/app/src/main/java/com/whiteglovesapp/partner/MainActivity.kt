@@ -1,4 +1,4 @@
-package com.mrwhitegloves.partner
+package com.whiteglovesapp.partner
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

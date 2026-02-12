@@ -12,11 +12,27 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+
+// NEW: Clean currency formatter
+const formatCurrency = (amount) => {
+  if (!amount || isNaN(amount)) return '₹0';
+  
+  const num = Number(amount);
+  const rounded = Math.round(num * 10) / 10; // Round to 1 decimal
+  
+  // If it's a clean whole number → show without .0
+  if (Number.isInteger(rounded)) {
+    return `₹${rounded.toLocaleString('en-IN')}`;
+  }
+  
+  return `₹${rounded.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+};
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false); // ← NEW STATE
   const [data, setData] = useState({
@@ -36,6 +52,7 @@ export default function DashboardScreen() {
         api.get('/partners/me/earnings/monthly'),
         api.get('/partners/me/status-history')
       ]);
+      console.log("historyRes: ",historyRes)
 
       setData({
         performance: summaryRes.data.performance,
@@ -69,9 +86,11 @@ export default function DashboardScreen() {
   ];
 
   const revenueData = [
-    { label: 'Total Revenue', value: `₹${data.revenue.totalRevenue}`, icon: 'wallet', color: '#9C27B0', bgColor: '#F3E5F5' },
-    { label: 'Pending Revenue', value: `₹${data.revenue.pendingRevenue}`, icon: 'time-outline', color: '#795548', bgColor: '#EFEBE9' },
+    { label: 'Total Revenue', value: formatCurrency(data.revenue.totalRevenue), icon: 'wallet', color: '#9C27B0', bgColor: '#F3E5F5', screen: '/revenue-breakdown' },
+    { label: 'Pending Revenue', value: formatCurrency(data.revenue.pendingRevenue), icon: 'time-outline', color: '#795548', bgColor: '#EFEBE9' },
   ];
+
+  const currentMonthEarningsDisplay = formatCurrency(data.currentMonthEarnings);
 
   const quickActions = [
     { label: 'Home', icon: 'home-outline', screen: '/' },
@@ -89,7 +108,7 @@ export default function DashboardScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F5F5' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F5F5', paddingBottom: insets.bottom }} edges={['top']}>
       <StatusBar barStyle="dark-content"/>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E0E0E0' }}>
         <Text style={{ fontSize: 18, fontWeight: '600', color: '#000', marginLeft: 12 }}>Dashboard</Text>
@@ -124,17 +143,26 @@ export default function DashboardScreen() {
 
         {/* Revenue, Earnings Overview, History, Quick Actions — ALL SAME AS BEFORE */}
         <View style={{ marginBottom: 16 }}>
-          {revenueData.map((item, index) => (
-            <View key={index} style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }}>
-              <View style={{ width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginRight: 16, backgroundColor: item.bgColor }}>
-                <Ionicons name={item.icon} size={24} color={item.color} />
+          {/* {revenueData.map((item, index) => ( */}
+            <TouchableOpacity onPress={() => router.push('/revenue-breakdown')} style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginRight: 16, backgroundColor: '#F3E5F5' }}>
+                <Ionicons name="wallet" size={24} color='#9C27B0' />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#666', marginBottom: 4 }}>{item.label}</Text>
-                <Text style={{ fontSize: 28, fontWeight: '700', color: '#000' }}>{item.value}</Text>
+                <Text style={{ fontSize: 16, color: '#666', marginBottom: 4 }}>Total Revenue</Text>
+                <Text style={{ fontSize: 28, fontWeight: '700', color: '#000' }}>{formatCurrency(data.revenue.totalRevenue)}</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', marginRight: 16, backgroundColor: '#EFEBE9' }}>
+                <Ionicons name="time-outline" size={24} color='#795548' />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, color: '#666', marginBottom: 4 }}>Pending Revenue</Text>
+                <Text style={{ fontSize: 28, fontWeight: '700', color: '#000' }}>{formatCurrency(data.revenue.pendingRevenue)}</Text>
               </View>
             </View>
-          ))}
+          {/* ))} */}
         </View>
 
         <View style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }}>
@@ -143,10 +171,10 @@ export default function DashboardScreen() {
             <Text style={{ fontSize: 14, color: '#999' }}>Last 30 days</Text>
           </View>
           <Text style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>Current Month Earnings</Text>
-          <Text style={{ fontSize: 36, fontWeight: '700', color: '#9C27B0' }}>₹{data.currentMonthEarnings}</Text>
+          <Text style={{ fontSize: 36, fontWeight: '700', color: '#9C27B0' }}>{currentMonthEarningsDisplay}</Text>
         </View>
 
-        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }}>
+        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 20, marginBottom: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 }}>
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#000', marginBottom: 16 }}>Last 30 Days Summary</Text>
           {data.history.length === 0 ? (
             <Text style={{ color: '#999', textAlign: 'center', padding: 20 }}>No activity in last 30 days</Text>
@@ -167,6 +195,18 @@ export default function DashboardScreen() {
               </View>
             ))
           )}
+        </View>
+        <View style={{ flexDirection: 'coloum', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="ellipse" size={10} color="#4CAF50" />
+              <Text style={{ fontSize: 14, color: '#000', fontWeight: '600', marginLeft: 6 }}>Completed</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="ellipse" size={10} color="#F44336" />
+              <Text style={{ fontSize: 14, color: '#000', fontWeight: '600', marginLeft: 6 }}>Cancelled</Text>
+          </View>
+          </View>
         </View>
 
         <Text style={{ fontSize: 20, fontWeight: '700', color: '#000', marginBottom: 16 }}>Quick Actions</Text>

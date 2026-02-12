@@ -24,14 +24,12 @@ export const uploadFcmTokenAsync = createAsyncThunk(
     //     console.log("Expo push tokens only work on physical devices");
     //     return rejectWithValue("Physical device required");
     //   }
-
     //   // 2. Request permission
     //   const { status } = await Notifications.requestPermissionsAsync();
     //   if (status !== 'granted') {
     //     console.log("Notification permission denied");
     //     return rejectWithValue("Permission not granted");
     //   }
-
     //   // 3. Set Android channel (optional but recommended)
     //   if (Platform.OS === 'android') {
     //     await Notifications.setNotificationChannelAsync('booking', {
@@ -42,28 +40,22 @@ export const uploadFcmTokenAsync = createAsyncThunk(
     //       enableVibrate: true,
     //     });
     //   }
-
     //   // 4. Get Expo Push Token (this IS a valid FCM token!)
-    //   const projectId = Constants?.expoConfig?.extra?.eas?.projectId 
+    //   const projectId = Constants?.expoConfig?.extra?.eas?.projectId
     //                  || Constants?.manifest?.extra?.eas?.projectId;
-
     //   const tokenData = await Notifications.getExpoPushTokenAsync({
     //     projectId, // Required for EAS builds
     //   });
-
     //   const expoPushToken = tokenData.data;
     //   console.log("Expo Push Token Generated:", expoPushToken);
-
     //   // 5. Send to your backend (same endpoint you already use!)
     //   await api.put('/me/fcm/me', { fcmToken: expoPushToken });
-
     //   return expoPushToken;
-
     // } catch (error) {
     //   console.error("Failed to get/upload Expo push token:", error);
     //   return rejectWithValue(error.message);
     // }
-  }
+  },
 );
 
 // ────── POST /partners/login ──────
@@ -87,7 +79,7 @@ export const loginPartnerAsync = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || "Login failed");
     }
-  }
+  },
 );
 
 // ────── GET /partners/:id (Fetch logged-in partner) ──────
@@ -99,10 +91,10 @@ export const fetchPartnerMe = createAsyncThunk(
       return res.data.partner;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.error || "Failed to fetch partner"
+        err.response?.data?.error || "Failed to fetch partner",
       );
     }
-  }
+  },
 );
 
 // Update online status
@@ -116,10 +108,10 @@ export const toggleOnlineStatus = createAsyncThunk(
       return res.data.partner;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.error || "Failed to update status"
+        err.response?.data?.error || "Failed to update status",
       );
     }
-  }
+  },
 );
 
 // ────── LOGOUT ──────
@@ -135,7 +127,7 @@ export const logoutPartnerAsync = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.error || "Logout failed");
     }
-  }
+  },
 );
 
 // ────── LOAD TOKEN FROM STORAGE ──────
@@ -149,7 +141,7 @@ export const loadPartnerTokenAsync = createAsyncThunk(
       console.error("Error loading token from AsyncStorage:", err);
       return null;
     }
-  }
+  },
 );
 
 const partnerAuthSlice = createSlice({

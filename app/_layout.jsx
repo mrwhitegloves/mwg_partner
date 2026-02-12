@@ -1,19 +1,23 @@
 // app/_layout.jsx
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-gesture-handler';
-import 'react-native-reanimated';
-import Toast from 'react-native-toast-message';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import { persistor, store } from '../store/store';
-import SplashScreen from './(onboarding)/splash';
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import "react-native-gesture-handler";
+import "react-native-reanimated";
+import Toast from "react-native-toast-message";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { persistor, store } from "../store/store";
+import SplashScreen from "./(onboarding)/splash";
 
-import { getSocket, initializeSocket } from '@/services/socket';
-import { useEffect, useRef } from 'react';
-import { AppState } from 'react-native';
+import { getSocket, initializeSocket } from "@/services/socket";
+import { useEffect, useRef } from "react";
+import { AppState } from "react-native";
 
 // ────── ROOT LAYOUT ──────
 export default function RootLayout() {
@@ -58,43 +62,54 @@ export default function RootLayout() {
 
     const handler = async (data) => {
       // await playRingtone();
-      console.log("data:-notifee ", data)
+      console.log("data:-notifee ", data);
       // await showBookingNotification(data);
-    // console.log(`New Booking! ₹${data.total} at ${data.scheduledTime}`)
-    // alert(`New Booking! ₹${data.total} at ${data.scheduledTime}`);
+      // console.log(`New Booking! ₹${data.total} at ${data.scheduledTime}`)
+      // alert(`New Booking! ₹${data.total} at ${data.scheduledTime}`);
     };
 
-    socket.on('newBooking', handler);
-    return () => socket.off('newBooking', handler);
+    socket.on("newBooking", handler);
+    return () => socket.off("newBooking", handler);
   }, []);
 
   // ────── RECONNECT SOCKET ──────
   useEffect(() => {
-  // Initial connection
-  initializeSocket().then((s) => {
-    socketRef.current = s;
-  });
+    // Initial connection
+    initializeSocket().then((s) => {
+      socketRef.current = s;
+    });
 
-  const subscription = AppState.addEventListener('change', async (state) => {
-    if (state === 'active') {
-      if (!socketRef.current?.connected) {
-        socketRef.current = await initializeSocket();
+    const subscription = AppState.addEventListener("change", async (state) => {
+      if (state === "active") {
+        if (!socketRef.current?.connected) {
+          socketRef.current = await initializeSocket();
+        }
       }
-    }
-  });
+    });
 
-  return () => subscription.remove();
-}, []);
+    return () => subscription.remove();
+  }, []);
 
   return (
     <Provider store={store}>
       <PersistGate loading={<SplashScreen />} persistor={persistor}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="(onboarding)"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            <Stack.Screen name="bookingDetails" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="modal"
+              options={{ presentation: "modal", title: "Modal" }}
+            />
+            <Stack.Screen
+              name="bookingDetails"
+              options={{ headerShown: false }}
+            />
           </Stack>
           <StatusBar style="dark" />
           <Toast />

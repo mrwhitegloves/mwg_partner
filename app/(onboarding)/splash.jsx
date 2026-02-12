@@ -58,7 +58,18 @@ const SplashScreen = () => {
         const res = await api.get('/partners/me');
         const partner = res.data.partner;
 
-        router.replace(partner ? '/(tabs)' : '/login');
+        // Check if user has already seen permissions screen
+        const hasPermissions = await AsyncStorage.getItem('permissions_shown');
+
+        if (partner) {
+           if (hasPermissions) {
+             router.replace('/(tabs)');
+           } else {
+             router.replace('/(onboarding)/permissions'); 
+           }
+        } else {
+           router.replace('/login');
+        }
       } catch (err) {
         await AsyncStorage.removeItem('partnerToken');
         router.replace('/login');
