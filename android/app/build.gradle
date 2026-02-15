@@ -98,8 +98,6 @@ android {
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
         manifestPlaceholders = [EXPO_PUBLIC_GOOGLE_PLACES_API_KEY: System.getenv("EXPO_PUBLIC_GOOGLE_PLACES_API_KEY")]
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
     }
     signingConfigs {
         debug {
