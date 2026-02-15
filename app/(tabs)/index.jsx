@@ -80,7 +80,7 @@ export default function HomeScreen() {
       const handleNewBooking = (data) => {
         setCurrentBooking(data);
         setModalVisible(true);
-        player.play();
+        // player.play();
       };
 
       const handleCancelled = () => {
@@ -136,7 +136,7 @@ export default function HomeScreen() {
     const socket = getSocket();
 
     try {
-      player.pause();
+      // player.pause();
       await api.put(`/bookings/${currentBooking.bookingId}/confirm`, {
         partnerLiveLocation: { latitude: 0, longitude: 0 },
       });
@@ -151,7 +151,7 @@ export default function HomeScreen() {
     } catch (err) {
       const msg = err.response?.data?.message || "Booking already assigned";
       Toast.show({ type: "error", text1: msg });
-      player.pause();
+      // player.pause();
       setModalVisible(false);
     }
   };
@@ -161,7 +161,7 @@ export default function HomeScreen() {
       const socket = getSocket();
       socket?.emit("declineBooking", { bookingId: currentBooking.bookingId });
     }
-    player.pause();
+    // player.pause();
     setModalVisible(false);
     Toast.show({ type: "info", text1: "Booking Declined" });
   };
@@ -170,7 +170,7 @@ export default function HomeScreen() {
     if (!booking?.bookingId) return;
 
     try {
-      player.pause(); // Ringtone on accept
+      // player.pause();
       await api.put(`/bookings/${booking.bookingId}/confirm`, {
         partnerLiveLocation: { latitude: 0, longitude: 0 },
       });
@@ -186,14 +186,14 @@ export default function HomeScreen() {
       Toast.show({ type: "error", text1: msg });
       dispatch(clearIncomingBooking());
     } finally {
-      player.pause();
+      // player.pause();
     }
   };
 
   const handleNotificationDecline = () => {
     const socket = getSocket();
     socket?.emit("declineBooking", { bookingId: booking?.bookingId });
-    player.pause();
+    // player.pause();
     dispatch(clearIncomingBooking());
     Toast.show({ type: "info", text1: "Booking Declined" });
   };

@@ -104,7 +104,7 @@
         {
           "icon": "./assets/images/notification.png",
           "color": "#ff5075",
-          "defaultChannel": "default",
+          "defaultChannel": "booking_channel_v2",
           "sounds": ["./assets/sounds/booking.wav"],
           "enableBackgroundRemoteNotifications": false
         }

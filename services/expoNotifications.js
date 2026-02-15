@@ -43,7 +43,7 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
+    await Notifications.setNotificationChannelAsync("booking_channel_v2", {
       name: "New Bookings",
       importance: Notifications.AndroidImportance.HIGH,
       sound: "booking.wav",
