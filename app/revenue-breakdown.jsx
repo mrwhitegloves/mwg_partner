@@ -1,16 +1,93 @@
-import React from 'react';
+// revenue-breakdown.jsx
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import axios from 'axios';
+import api from '@/services/api';
 
 export default function RevenueBreakdownScreen() {
   const router = useRouter();
+
+  const [breakdown, setBreakdown] = useState({
+    totalRevenue: 0,
+    totalGstAmount: 0,
+    totalPlatformFee: 0,
+    totalIncome: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRevenueBreakdown = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await api.get('/partners/me/revenue-breakdown');
+        console.log("response: ",response)
+
+        if (response.data?.breakdownData) {
+          setBreakdown(response.data.breakdownData);
+        }
+      } catch (err) {
+        console.error('Revenue fetch error:', err);
+        setError(err.response?.data?.error || 'Failed to load revenue data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueBreakdown();
+  }, []);
+
+  // Calculate revenue after deductions
+  const revenueAfterDeductions = 
+    breakdown.totalRevenue - breakdown.totalGstAmount - breakdown.totalPlatformFee;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#ef4343" />
+        <Text style={{ marginTop: 16, color: '#666' }}>Loading revenue data...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center' }}>
+        <Ionicons name="alert-circle" size={64} color="#ef4343" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: '#333', textAlign: 'center' }}>
+          {error}
+        </Text>
+        <TouchableOpacity
+          onPress={() => {
+            setLoading(true);
+            setError(null);
+            // Re-fetch on retry
+            setTimeout(() => setLoading(false), 1000); // Simulate retry delay
+          }}
+          style={{
+            marginTop: 24,
+            backgroundColor: '#ef4343',
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Retry</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F5F5' }} edges={['top']}>
@@ -46,20 +123,11 @@ export default function RevenueBreakdownScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Subtitle */}
-        <Text style={{
-          fontSize: 15,
-          color: '#999',
-          textAlign: 'center',
-          marginVertical: 20,
-          paddingHorizontal: 24
-        }}>
-          How your earnings are calculated
-        </Text>
 
         {/* Total Revenue Card */}
         <View style={{
           backgroundColor: '#FFF',
+          marginVertical: 20,
           marginHorizontal: 16,
           marginBottom: 24,
           padding: 24,
@@ -102,7 +170,7 @@ export default function RevenueBreakdownScreen() {
             color: '#333',
             marginBottom: 8
           }}>
-            ₹25,030.20
+            ₹{breakdown?.totalRevenue?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
 
           <Text style={{
@@ -170,7 +238,7 @@ export default function RevenueBreakdownScreen() {
             fontWeight: 'bold',
             color: '#333'
           }}>
-            − ₹3,818.50
+            − ₹{breakdown?.totalGstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
         </View>
 
@@ -239,7 +307,7 @@ export default function RevenueBreakdownScreen() {
             fontWeight: 'bold',
             color: '#333'
           }}>
-            − ₹2,503.00
+            − ₹{breakdown?.totalPlatformFee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
         </View>
 
@@ -267,7 +335,7 @@ export default function RevenueBreakdownScreen() {
             fontWeight: 'bold',
             color: '#2ECC71'
           }}>
-            ₹18,708.70
+            ₹{revenueAfterDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
         </View>
 

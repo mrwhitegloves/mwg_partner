@@ -13,9 +13,6 @@
       "enabled": true,
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/c45e4938-e08b-49aa-8d2c-bcd075a18f30",
-      "requestHeaders": {
-        "expo-channel-name": "preview"
-      }
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {

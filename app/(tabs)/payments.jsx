@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useSelector } from 'react-redux';
+import { icon, spacing, radius, font } from '@/services/ui';
 
 export default function PaymentsScreen() {
   const router = useRouter();
@@ -128,7 +129,7 @@ const openDatePicker = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.xl * 2 }}>
         {activeTab === 'payouts' ? (
           <>
             {/* Filter Button */}
