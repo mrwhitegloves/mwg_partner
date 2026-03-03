@@ -12,7 +12,7 @@
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/c45e4938-e08b-49aa-8d2c-bcd075a18f30",
+      "url": "https://u.expo.dev/c45e4938-e08b-49aa-8d2c-bcd075a18f30"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
@@ -44,17 +44,17 @@
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_LOCATION",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.USE_FULL_SCREEN_INTENT",
-        "android.permission.SYSTEM_ALERT_WINDOW"
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "blockedPermissions": [
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "jsEngine": "hermes",
       "package": "com.whiteglovesapp.partner",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 5
+      "versionCode": 8
     },
     "web": {
       "output": "static",
@@ -111,12 +111,6 @@
         {
           "requestLocationPermission": true,
           "locationPermission": "Allow MWG Partner to use your location"
-        }
-      ],
-      [
-        "expo-audio",
-        {
-          "microphonePermission": "Allow MWG Partner to play sound for new bookings."
         }
       ],
       "expo-web-browser"

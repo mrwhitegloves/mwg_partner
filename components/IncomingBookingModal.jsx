@@ -1,6 +1,5 @@
 import api from "@/services/api";
 import { getSocket } from "@/services/socket";
-import { stopRingtone } from "@/services/sound";
 import { clearIncomingBooking } from "@/store/slices/bookingSlice";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
@@ -15,7 +14,6 @@ export default function IncomingBookingModal() {
     if (!booking?.bookingId) return;
 
     try {
-      await stopRingtone();
       await api.put(`/bookings/${booking.bookingId}/confirm`, {
         partnerLiveLocation: { latitude: 0, longitude: 0 },
       });
@@ -29,15 +27,12 @@ export default function IncomingBookingModal() {
       const msg = err.response?.data?.message || "Booking already taken";
       Toast.show({ type: "error", text1: msg });
       dispatch(clearIncomingBooking());
-    } finally {
-      await stopRingtone();
     }
   };
 
   const handleNotificationDecline = async () => {
     const socket = getSocket();
     socket?.emit("declineBooking", { bookingId: booking?.bookingId });
-    await stopRingtone();
     dispatch(clearIncomingBooking());
     Toast.show({ type: "info", text1: "Booking Declined" });
   };

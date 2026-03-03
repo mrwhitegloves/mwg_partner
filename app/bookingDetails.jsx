@@ -36,7 +36,8 @@ export default function BookingDetailsScreen() {
   const [partnerLocation, setPartnerLocation] = useState(null);
   const [staticMapUrl, setStaticMapUrl] = useState(null);
   const [otp, setOtp] = useState('');
-  const [showRazorpay, setShowRazorpay] = useState(false);
+  const [showRazorpayOnline, setShowRazorpayOnline] = useState(false);
+  const [showRazorpaySplit, setShowRazorpaySplit] = useState(false);
   const [razorpayHtml, setRazorpayHtml] = useState('');
   const [splitOnlineAmount, setSplitOnlineAmount] = useState('');
   const [selectedPaymentMode, setSelectedPaymentMode] = useState(null); // 'online' | 'cash' | 'split' | null
@@ -57,6 +58,10 @@ export default function BookingDetailsScreen() {
       const res = await api.get(`/partners/booking/${id}`);
       setBooking(res.data.booking);
       generateStaticMap(res.data.booking.serviceLocation.address);
+      if(res?.data?.booking?.paymentSplit?.onlineTransactionId){
+        setSplitOnlineAmount(res?.data?.booking?.paymentSplit?.onlineAmount);
+        setSelectedPaymentMode('split')
+      }
     } catch (err) {
       Toast.show({ type: 'error', text1: 'Failed to load booking' });
     } finally {
@@ -128,15 +133,12 @@ export default function BookingDetailsScreen() {
   };
 
   const markArrived = async () => {
-    console.log("vivek 1")
     if(booking?.source === "admin"){
-      console.log("vivek 2")
       await api.post(`/partners/booking/${id}/admin-service-start`);
       updateBookingStatus(id, "in-progress");
       fetchBooking();
     }
     else {
-      console.log("vivek 3")
       await api.post(`/partners/booking/${id}/mark-arrived`);
       updateBookingStatus(id, "arrived");
       fetchBooking();
@@ -177,6 +179,12 @@ const startPaymentPolling = (qrCodeId) => {
       }
       // Optional: Handle partial payment
       else if (res.data.success && res.data.data.status === 'partial') {
+        // Payment completed!
+        clearInterval(interval);
+        setQrPollingInterval(null);
+
+        setShowRazorpaySplit(false);
+        fetchBooking();
         Toast.show({
           type: 'info',
           text1: 'Partial Payment',
@@ -227,7 +235,7 @@ useEffect(() => {
         <p>Waiting for payment...</p>
       </div>
     `);
-    setShowRazorpay(true);
+    setShowRazorpayOnline(true);
 
     // Start polling for payment
     startPaymentPolling(res.data.qrCodeId);
@@ -239,8 +247,53 @@ useEffect(() => {
   }
 };
 
-const closeQr = () => {
-  setShowRazorpay(false);
+  const openRazorpayQRForSplit = async (amount) => {
+  if (!amount || amount <= 0) {
+    Toast.show({ type: 'error', text1: 'Invalid Amount' });
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const res = await api.post('/payments/create-upi-qr', {
+      amount: parseInt(amount),
+      bookingId: booking._id,
+      bookingNumber: booking.bookingId,
+      // customerId: booking.customer?._id || null,
+    });
+
+    const { imageUrl } = res.data;
+
+    // Save QR image URL in state to show full screen
+    setRazorpayHtml(`
+      <div style="background:#000;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;font-family:sans-serif">
+        <h2>Customer Scan & Pay ₹${amount}</h2>
+        <img src="${imageUrl}" style="width:700px;height:80vh;margin:20px;border-radius:16px" />
+        <p>Waiting for payment...</p>
+      </div>
+    `);
+    setShowRazorpaySplit(true);
+
+    // Start polling for payment
+    startPaymentPolling(res.data.qrCodeId);
+
+  } catch (err) {
+    Toast.show({ type: 'error', text1: 'Failed', text2: 'Could not generate QR' });
+  } finally {
+    setLoading(false);
+  }
+};
+
+const closeOnlineQr = () => {
+  setShowRazorpayOnline(false);
+  if (qrPollingInterval) {
+    clearInterval(qrPollingInterval)
+    setQrPollingInterval(null);
+  };
+};
+
+const closeSplitQr = () => {
+  setShowRazorpaySplit(false);
   if (qrPollingInterval) {
     clearInterval(qrPollingInterval)
     setQrPollingInterval(null);
@@ -248,7 +301,7 @@ const closeQr = () => {
 };
 
   const handlePaymentSuccess = async () => {
-    setShowRazorpay(false);
+    setShowRazorpayOnline(false);
     await api.post(`/partners/booking/${id}/collect-payment`, { paymentMode: 'full-online', onlineAmount: booking.pricing.total });
     updateBookingStatus(id, "completed");
     fetchBooking();
@@ -632,7 +685,11 @@ const closeQr = () => {
                 {['online', 'cash', 'split'].map((mode) => (
                   <TouchableOpacity
                     key={mode}
-                    onPress={() => setSelectedPaymentMode(mode)}
+                    onPress={() => {
+                      if(!booking.paymentSplit.onlineTransactionId){
+                        setSelectedPaymentMode(mode)
+                      }
+                    }}
                     style={{
                       flex: 1,
                       padding: 16,
@@ -705,6 +762,13 @@ const closeQr = () => {
             {/* SPLIT PAYMENT */}
             {selectedPaymentMode === 'split' && (
               <View>
+                {booking?.paymentSplit?.onlineTransactionId ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F5E9', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Ionicons name="checkmark-circle" size={20} color="#2E7D32" />
+            <Text style={{ fontSize: 14, color: '#2E7D32', fontWeight: '600', marginLeft: 8 }}>₹{booking?.paymentSplit?.onlineAmount} Amount Paid Through Online</Text>
+          </View>
+                ) : (
+                <View>
                 <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
                   Enter Online Amount
                 </Text>
@@ -738,13 +802,15 @@ const closeQr = () => {
                 />
                 <TouchableOpacity
                   style={{ backgroundColor: '#9C27B0', padding: 16, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 }}
-                  onPress={() => openRazorpayQR(splitOnlineAmount || total / 2)}
+                  onPress={() => openRazorpayQRForSplit(splitOnlineAmount || total / 2)}
                 >
                   <Ionicons name="qr-code" size={24} color="#fff" />
                   <Text style={{ color: '#fff', fontWeight: '700' }}>
                     Collect Online Part (₹{splitOnlineAmount || Math.round(total / 2)})
                   </Text>
                 </TouchableOpacity>
+                </View>
+                )}
 
                 <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>
                   Remaining Cash Amount
@@ -760,9 +826,9 @@ const closeQr = () => {
                     backgroundColor: '#10B981',
                     padding: 18,
                     borderRadius: 12,
-                    opacity: splitOnlineAmount ? 1 : 0.5
+                    opacity: splitOnlineAmount ? (booking?.paymentSplit?.onlineTransactionId ? 1 : 0.5) : 0.5
                   }}
-                  disabled={!splitOnlineAmount}
+                  disabled={!splitOnlineAmount || !booking.paymentSplit.onlineTransactionId}
                   onPress={async () => {
                     await collectSplit();
                     setSelectedPaymentMode(null);
@@ -924,11 +990,11 @@ const closeQr = () => {
       </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* RAZORPAY QR FULL SCREEN */}
-      {showRazorpay && (
+      {/* RAZORPAY QR FULL SCREEN FOR ONLINE PAYMENT*/}
+      {showRazorpayOnline && (
         <View style={{ position: 'absolute', top: 40, left: 0, right: 0, bottom: 0, backgroundColor: '#000' }}>
           <View style={{ flexDirection: 'row', padding: 16, backgroundColor: '#fff', alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => closeQr()}>
+            <TouchableOpacity onPress={() => closeOnlineQr()}>
               <Ionicons name="close" size={28} color="#000" />
             </TouchableOpacity>
             <Text style={{ flex: 1, textAlign: 'center', fontWeight: '700', fontSize: 18 }}>Customer Scan QR</Text>
@@ -939,7 +1005,29 @@ const closeQr = () => {
               try {
                 const data = JSON.parse(e.nativeEvent.data);
                 if (data.type === 'success') handlePaymentSuccess();
-                if (data.type === 'cancel') setShowRazorpay(false);
+                if (data.type === 'cancel') setShowRazorpayOnline(false);
+              } catch {}
+            }}
+          />
+        </View>
+      )}
+
+      {/* RAZORPAY QR FULL SCREEN FOR SPLIT PAYMENT */}
+      {showRazorpaySplit && (
+        <View style={{ position: 'absolute', top: 40, left: 0, right: 0, bottom: 0, backgroundColor: '#000' }}>
+          <View style={{ flexDirection: 'row', padding: 16, backgroundColor: '#fff', alignItems: 'center' }}>
+            <TouchableOpacity onPress={() => closeSplitQr()}>
+              <Ionicons name="close" size={28} color="#000" />
+            </TouchableOpacity>
+            <Text style={{ flex: 1, textAlign: 'center', fontWeight: '700', fontSize: 18 }}>Customer Scan QR</Text>
+          </View>
+          <WebView
+            source={{ html: razorpayHtml }}
+            onMessage={(e) => {
+              try {
+                const data = JSON.parse(e.nativeEvent.data);
+                if (data.type === 'success') setShowRazorpaySplit(false);
+                if (data.type === 'cancel') setShowRazorpaySplit(false);
               } catch {}
             }}
           />

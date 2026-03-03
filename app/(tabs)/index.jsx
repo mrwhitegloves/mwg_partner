@@ -4,7 +4,6 @@ import api from "@/services/api";
 import { getSocket, initializeSocket } from "@/services/socket";
 import { clearIncomingBooking } from "@/store/slices/bookingSlice";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useAudioPlayer } from "expo-audio";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -31,8 +30,6 @@ export default function HomeScreen() {
   const { partner, loading } = useSelector((state) => state.auth);
   const onlineStatus = useSelector((state) => state.onlineStatus);
   const { booking, showModal } = useSelector((state) => state.incomingBooking);
-  const audioSource = require("../../assets/sounds/booking.wav");
-  const player = useAudioPlayer(audioSource);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [currentBooking, setCurrentBooking] = useState(null);
@@ -80,7 +77,6 @@ export default function HomeScreen() {
       const handleNewBooking = (data) => {
         setCurrentBooking(data);
         setModalVisible(true);
-        // player.play();
       };
 
       const handleCancelled = () => {
@@ -136,7 +132,6 @@ export default function HomeScreen() {
     const socket = getSocket();
 
     try {
-      // player.pause();
       await api.put(`/bookings/${currentBooking.bookingId}/confirm`, {
         partnerLiveLocation: { latitude: 0, longitude: 0 },
       });
@@ -151,7 +146,6 @@ export default function HomeScreen() {
     } catch (err) {
       const msg = err.response?.data?.message || "Booking already assigned";
       Toast.show({ type: "error", text1: msg });
-      // player.pause();
       setModalVisible(false);
     }
   };
@@ -161,7 +155,6 @@ export default function HomeScreen() {
       const socket = getSocket();
       socket?.emit("declineBooking", { bookingId: currentBooking.bookingId });
     }
-    // player.pause();
     setModalVisible(false);
     Toast.show({ type: "info", text1: "Booking Declined" });
   };
@@ -170,7 +163,6 @@ export default function HomeScreen() {
     if (!booking?.bookingId) return;
 
     try {
-      // player.pause();
       await api.put(`/bookings/${booking.bookingId}/confirm`, {
         partnerLiveLocation: { latitude: 0, longitude: 0 },
       });
@@ -185,15 +177,12 @@ export default function HomeScreen() {
       const msg = err.response?.data?.message || "Booking already taken";
       Toast.show({ type: "error", text1: msg });
       dispatch(clearIncomingBooking());
-    } finally {
-      // player.pause();
     }
   };
 
   const handleNotificationDecline = () => {
     const socket = getSocket();
     socket?.emit("declineBooking", { bookingId: booking?.bookingId });
-    // player.pause();
     dispatch(clearIncomingBooking());
     Toast.show({ type: "info", text1: "Booking Declined" });
   };
