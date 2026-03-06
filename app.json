@@ -45,9 +45,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS",
-        "!android.permission.FOREGROUND_SERVICE_LOCATION",
-        "!android.permission.FOREGROUND_SERVICE"
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "jsEngine": "hermes",
       "package": "com.whiteglovesapp.partner",
@@ -90,7 +88,13 @@
             "minSdkVersion": 24,
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResources": true,
-            "enableMinifyInReleaseBuilds": true
+            "enableMinifyInReleaseBuilds": true,
+            "permissions": [
+              "ACCESS_FINE_LOCATION",
+              "ACCESS_COARSE_LOCATION",
+              "!android.permission.FOREGROUND_SERVICE_LOCATION",
+              "!android.permission.FOREGROUND_SERVICE"
+            ]
           },
           "ios": {
             "deploymentTarget": "15.1"
