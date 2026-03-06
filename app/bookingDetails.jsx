@@ -127,30 +127,46 @@ export default function BookingDetailsScreen() {
 
   // ACTION HANDLERS
   const startService = async () => {
+    try {
     await api.post(`/partners/booking/${id}/start-service`);
     updateBookingStatus(id, "enroute");
     fetchBooking();
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Failed to start service' });
+    }
   };
 
   const markArrived = async () => {
     if(booking?.source === "admin"){
+      try {
       await api.post(`/partners/booking/${id}/admin-service-start`);
       updateBookingStatus(id, "in-progress");
       fetchBooking();
+      } catch (err) {
+      Toast.show({ type: 'error', text1: 'Failed to mark arrived' });
+    }
     }
     else {
+      try {
       await api.post(`/partners/booking/${id}/mark-arrived`);
       updateBookingStatus(id, "arrived");
       fetchBooking();
+      } catch (err) {
+      Toast.show({ type: 'error', text1: 'Failed to mark arrived' });
+    }
     }
   };
 
   const verifyOtp = async () => {
+    try {
     if (otp.length !== 4) return Toast.show({ type: 'error', text1: 'Invalid OTP', text2: 'Please enter 4-digit OTP' });
     await api.post(`/partners/booking/${id}/verify-otp`, { otp });
     updateBookingStatus(id, "in-progress");
     setOtp('');
     fetchBooking();
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Failed to verify OTP' });
+    }
   };
 
   // Start polling when QR is shown
@@ -301,17 +317,25 @@ const closeSplitQr = () => {
 };
 
   const handlePaymentSuccess = async () => {
+    try {
     setShowRazorpayOnline(false);
     await api.post(`/partners/booking/${id}/collect-payment`, { paymentMode: 'full-online', onlineAmount: booking.pricing.total });
     updateBookingStatus(id, "completed");
     fetchBooking();
     Toast.show({ type: 'success', text1: 'Payment Received!' });
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Failed to payment received' });
+    }
   };
 
   const collectCash = async () => {
+    try {
     await api.post(`/partners/booking/${id}/collect-payment`, { paymentMode: 'full-cash', cashAmount: booking.pricing.total });
     updateBookingStatus(id, "completed");
     fetchBooking();
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Something went wrong!' });
+    }
   };
 
   const collectSplit = async () => {
@@ -319,6 +343,8 @@ const closeSplitQr = () => {
     if (!online || online <= 0 || online >= booking.pricing.total) {
       return Toast.show({ type: 'error', text1: 'Invalid Amount', text2: 'Please enter valid online amount' });
     }
+
+    try {
     await api.post(`/partners/booking/${id}/collect-payment`, {
       paymentMode: 'split',
       onlineAmount: online,
@@ -326,6 +352,9 @@ const closeSplitQr = () => {
     });
     updateBookingStatus(id, "completed");
     fetchBooking();
+    } catch (err) {
+      Toast.show({ type: 'error', text1: 'Something went wrong!' });
+    }
   };
 
   const formatDate = (dateStr) => {
